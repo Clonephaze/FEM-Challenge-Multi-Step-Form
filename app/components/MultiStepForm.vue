@@ -3,7 +3,7 @@ import type { Plan, Billing, Addon } from '~/composables/useFormState'
 
 const route = useRoute()
 const router = useRouter()
-const { currentStep, goNext, goBack, name, email, phone, plan, billing, addons } = useFormState()
+const { currentStep, goNext, goBack, resetForm, name, email, phone, plan, billing, addons } = useFormState()
 
 // ── Transition direction ──────────────────────────────────
 const isForward = ref(true)
@@ -17,6 +17,18 @@ watch(currentStep, (step) => {
   announcement.value = step < 5
     ? `Step ${step} of 4: ${STEP_NAMES[step]}`
     : 'Complete: Thank you!'
+})
+
+// ── Focus management ─────────────────────────────────
+// After each step change, move focus to the new step's heading so keyboard
+// and screen-reader users land in the right place instead of staying on the
+// button they just activated. nextTick waits for the Transition out-in swap.
+const stepContent = ref<HTMLElement | null>(null)
+let hasMounted = false
+watch(currentStep, async () => {
+  if (!hasMounted) return
+  await nextTick()
+  stepContent.value?.focus()
 })
 
 // ── sessionStorage persistence ────────────────────────────
@@ -36,6 +48,12 @@ watchEffect(() => {
     addons: [...addons.value],
   }))
 })
+
+function handleReset() {
+  sessionStorage.removeItem(STORAGE_KEY)
+  resetForm()
+  router.replace({ query: { step: 1 } })
+}
 
 // ── URL query sync ────────────────────────────────────────
 watch(currentStep, (step) => {
@@ -69,6 +87,7 @@ onMounted(() => {
 
   // Now safe to start persisting — any write after this point reflects restored state
   isRestored.value = true
+  hasMounted = true
 })
 </script>
 
@@ -82,7 +101,13 @@ onMounted(() => {
     <div class="content-area">
       <!-- Transition wrapper — key change triggers direction-aware slide -->
       <Transition :name="transitionName" mode="out-in">
-        <div :key="currentStep" class="step-content">
+        <div
+          :key="currentStep"
+          ref="stepContent"
+          class="step-content"
+          tabindex="-1"
+          aria-label="Step content"
+        >
           <StepsStepPersonalInfo v-if="currentStep === 1" />
           <StepsStepSelectPlan   v-if="currentStep === 2" />
           <StepsStepAddons       v-if="currentStep === 3" />
@@ -98,6 +123,12 @@ onMounted(() => {
           @click="goBack"
         >
           Go Back
+        </button>
+        <button
+          class="btn-reset"
+          @click="handleReset"
+        >
+          Reset demo
         </button>
         <button
           v-show="currentStep < 4"
@@ -154,6 +185,9 @@ onMounted(() => {
 .step-content {
   flex: 1;
   padding: 56px 100px 0;
+  // Suppress the focus ring on the container itself — focus is
+  // moved here programmatically only, not as a visible tab stop.
+  &:focus { outline: none; }
 }
 
 .nav-bar {
@@ -192,6 +226,21 @@ onMounted(() => {
   transition: color 0.2s;
 
   &:hover { color: var(--color-blue-950); }
+}
+
+.btn-reset {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-grey-500);
+  padding: 8px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+
+  &:hover { opacity: 1; }
 }
 
 .btn-next {

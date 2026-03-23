@@ -120,12 +120,24 @@ function goToStep(n: number) {
   currentStep.value = n
 }
 
+function resetForm() {
+  currentStep.value = 1
+  name.value = ''
+  email.value = ''
+  phone.value = ''
+  plan.value = 'arcade'
+  billing.value = 'monthly'
+  addons.value = new Set()
+  errors.value = { name: '', email: '', phone: '' }
+}
+
 export function useFormState() {
   return {
     currentStep,
     goNext,
     goBack,
     goToStep,
+    resetForm,
 
     name,
     email,
