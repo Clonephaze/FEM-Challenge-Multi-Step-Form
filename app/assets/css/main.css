@@ -1,0 +1,121 @@
+/* =========================================================
+   Fonts
+   ========================================================= */
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('/fonts/Ubuntu-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('/fonts/Ubuntu-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('/fonts/Ubuntu-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* =========================================================
+   Custom Properties
+   ========================================================= */
+:root {
+  /* Primary */
+  --color-blue-950:   hsl(213, 96%, 18%);
+  --color-purple-600: hsl(243, 100%, 62%);
+  --color-blue-300:   hsl(228, 100%, 84%);
+  --color-blue-200:   hsl(206, 94%, 87%);
+  --color-red-500:    hsl(354, 84%, 57%);
+
+  /* Neutral */
+  --color-grey-500:   hsl(231, 11%, 63%);
+  --color-purple-200: hsl(229, 24%, 87%);
+  --color-blue-100:   hsl(218, 100%, 97%);
+  --color-blue-50:    hsl(231, 100%, 99%);
+  --color-white:      hsl(0, 100%, 100%);
+
+  /* Accent (yearly badge) */
+  --color-teal-300:   hsl(160, 83%, 60%);
+
+  /* Typography */
+  --font-family: 'Ubuntu', sans-serif;
+  --font-size-base: 16px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+}
+
+/* =========================================================
+   Reset
+   ========================================================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: var(--font-size-base);
+}
+
+body {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-blue-950);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input {
+  font-family: inherit;
+}
+
+a {
+  text-decoration: underline;
+  color: var(--color-grey-500);
+}
+
+/* =========================================================
+   Focus styles (keyboard accessibility)
+   ========================================================= */
+:focus-visible {
+  outline: 2px solid var(--color-purple-600);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Inputs get border-color focus instead of outline */
+input:focus-visible {
+  outline: none;
+  border-color: var(--color-purple-600);
+}
+
+/* =========================================================
+   Shared step typography (used across all step components)
+   ========================================================= */
+.step-title {
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-blue-950);
+  margin-bottom: 12px;
+}
+
+.step-subtitle {
+  font-size: 1rem;
+  color: var(--color-grey-500);
+  line-height: 1.6;
+}
