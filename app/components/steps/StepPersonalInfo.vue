@@ -1,5 +1,43 @@
 <script setup lang="ts">
 const { name, email, phone, errors } = useFormState()
+
+function formatPhone(value: string): string {
+  const hasPlus = value.trimStart().startsWith('+')
+  // E.164: max 15 digits (excluding the + itself)
+  const digits = value.replace(/\D/g, '').slice(0, 15)
+  if (!digits) return hasPlus ? '+' : ''
+
+  if (!hasPlus && digits.length <= 10) {
+    // Local 10-digit: XXX XXX XXXX
+    let r = digits.slice(0, 3)
+    if (digits.length > 3) r += ' ' + digits.slice(3, 6)
+    if (digits.length > 6) r += ' ' + digits.slice(6, 10)
+    return r
+  }
+
+  if (hasPlus && digits.length <= 11) {
+    // International up to 11 digits: +X XXX XXX XXXX
+    let r = '+' + digits[0]
+    if (digits.length > 1) r += ' ' + digits.slice(1, 4)
+    if (digits.length > 4) r += ' ' + digits.slice(4, 7)
+    if (digits.length > 7) r += ' ' + digits.slice(7, 11)
+    return r
+  }
+
+  // Longer numbers (12–15 digits): group in 3s after the + prefix
+  const groups: string[] = []
+  for (let i = 0; i < digits.length; i += 3) {
+    groups.push(digits.slice(i, i + 3))
+  }
+  return (hasPlus ? '+' : '') + groups.join(' ')
+}
+
+function handlePhoneInput(event: Event) {
+  const input = event.target as HTMLInputElement
+  const formatted = formatPhone(input.value)
+  phone.value = formatted
+  input.value = formatted
+}
 </script>
 
 <template>
@@ -50,11 +88,12 @@ const { name, email, phone, errors } = useFormState()
         </div>
         <input
           id="phone"
-          v-model="phone"
+          :value="phone"
+          @input="handlePhoneInput"
           type="tel"
           class="field-input"
           :class="{ 'field-input--error': errors.phone }"
-          placeholder="e.g. +1 234 567 890"
+          placeholder="e.g. 234 567 8901"
           autocomplete="tel"
         />
       </div>
@@ -62,7 +101,7 @@ const { name, email, phone, errors } = useFormState()
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .fields {
   display: flex;
   flex-direction: column;
@@ -106,23 +145,24 @@ const { name, email, phone, errors } = useFormState()
   outline: none;
   transition: border-color 0.2s;
   cursor: pointer;
-}
 
-.field-input::placeholder {
-  color: var(--color-grey-500);
-  font-weight: var(--font-weight-regular);
-}
+  &::placeholder {
+    color: var(--color-grey-500);
+    font-weight: var(--font-weight-regular);
+  }
 
-.field-input:hover,
-.field-input:focus {
-  border-color: var(--color-purple-600);
-}
+  &:hover,
+  &:focus {
+    border-color: var(--color-purple-600);
+  }
 
-.field-input--error {
-  border-color: var(--color-red-500);
-}
+  // BEM modifier — error state overrides hover/focus border colour
+  &--error {
+    border-color: var(--color-red-500);
 
-.field-input--error:focus {
-  border-color: var(--color-red-500);
+    &:focus {
+      border-color: var(--color-red-500);
+    }
+  }
 }
 </style>

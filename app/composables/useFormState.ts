@@ -99,6 +99,9 @@ function validateStep1(): boolean {
   if (!phone.value.trim()) {
     errors.value.phone = 'This field is required'
     valid = false
+  } else if (phone.value.replace(/\D/g, '').length < 7) {
+    errors.value.phone = 'Please enter a valid phone number'
+    valid = false
   }
 
   return valid

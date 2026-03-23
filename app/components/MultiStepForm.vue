@@ -1,19 +1,95 @@
-<script setup lang="ts">
-const { currentStep, goNext, goBack } = useFormState()
+﻿<script setup lang="ts">
+import type { Plan, Billing, Addon } from '~/composables/useFormState'
+
+const route = useRoute()
+const router = useRouter()
+const { currentStep, goNext, goBack, name, email, phone, plan, billing, addons } = useFormState()
+
+// ── Transition direction ──────────────────────────────────
+const isForward = ref(true)
+watch(currentStep, (newVal, oldVal) => { isForward.value = newVal > oldVal })
+const transitionName = computed(() => isForward.value ? 'step-forward' : 'step-backward')
+
+// ── Accessible step announcement ─────────────────────────
+const STEP_NAMES = ['', 'Your info', 'Select plan', 'Add-ons', 'Summary']
+const announcement = ref('')
+watch(currentStep, (step) => {
+  announcement.value = step < 5
+    ? `Step ${step} of 4: ${STEP_NAMES[step]}`
+    : 'Complete: Thank you!'
+})
+
+// ── sessionStorage persistence ────────────────────────────
+const STORAGE_KEY = 'fem-multistep-state'
+// Prevents the eager watchEffect from overwriting sessionStorage before
+// onMounted has a chance to restore the saved values.
+const isRestored = ref(false)
+
+watchEffect(() => {
+  if (!import.meta.client || !isRestored.value) return
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+    name: name.value,
+    email: email.value,
+    phone: phone.value,
+    plan: plan.value,
+    billing: billing.value,
+    addons: [...addons.value],
+  }))
+})
+
+// ── URL query sync ────────────────────────────────────────
+watch(currentStep, (step) => {
+  router.replace({ query: { step } })
+})
+
+// ── Restore on mount ──────────────────────────────────────
+onMounted(() => {
+  // Restore form fields from sessionStorage
+  try {
+    const saved = sessionStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const data = JSON.parse(saved)
+      if (data.name)                          name.value    = data.name
+      if (data.email)                         email.value   = data.email
+      if (data.phone)                         phone.value   = data.phone
+      if (data.plan)                          plan.value    = data.plan as Plan
+      if (data.billing)                       billing.value = data.billing as Billing
+      if (Array.isArray(data.addons))         addons.value  = new Set(data.addons as Addon[])
+    }
+  } catch { /* corrupt storage — ignore */ }
+
+  // Restore step from URL (must come after session restore so prices reflect billing)
+  const stepParam = Number(route.query.step)
+  if (stepParam >= 1 && stepParam <= 5) {
+    currentStep.value = stepParam
+  }
+
+  // Sync current step to URL
+  router.replace({ query: { step: currentStep.value } })
+
+  // Now safe to start persisting — any write after this point reflects restored state
+  isRestored.value = true
+})
 </script>
 
 <template>
+  <!-- Screen-reader step announcements -->
+  <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement }}</div>
+
   <div class="card">
     <SidebarNav />
 
     <div class="content-area">
-      <div class="step-content">
-        <StepsStepPersonalInfo v-show="currentStep === 1" />
-        <StepsStepSelectPlan   v-show="currentStep === 2" />
-        <StepsStepAddons       v-show="currentStep === 3" />
-        <StepsStepSummary      v-show="currentStep === 4" />
-        <StepsStepThankYou     v-show="currentStep === 5" />
-      </div>
+      <!-- Transition wrapper — key change triggers direction-aware slide -->
+      <Transition :name="transitionName" mode="out-in">
+        <div :key="currentStep" class="step-content">
+          <StepsStepPersonalInfo v-if="currentStep === 1" />
+          <StepsStepSelectPlan   v-if="currentStep === 2" />
+          <StepsStepAddons       v-if="currentStep === 3" />
+          <StepsStepSummary      v-if="currentStep === 4" />
+          <StepsStepThankYou     v-if="currentStep === 5" />
+        </div>
+      </Transition>
 
       <nav class="nav-bar" v-show="currentStep < 5">
         <button
@@ -42,7 +118,20 @@ const { currentStep, goNext, goBack } = useFormState()
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+// ── Desktop card ──
 .card {
   display: flex;
   flex-direction: row;
@@ -75,7 +164,21 @@ const { currentStep, goNext, goBack } = useFormState()
   gap: 16px;
 }
 
-/* "Go Back" sits on the left when present */
+// ── Navigation buttons ──
+@mixin cta-button {
+  font-family: var(--font-family);
+  font-size: 1rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-white);
+  padding: 14px 28px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover { opacity: 0.8; }
+}
+
 .btn-back {
   margin-right: auto;
   background: none;
@@ -87,28 +190,49 @@ const { currentStep, goNext, goBack } = useFormState()
   color: var(--color-grey-500);
   padding: 12px 8px;
   transition: color 0.2s;
-}
-.btn-back:hover { color: var(--color-blue-950); }
 
-.btn-next,
+  &:hover { color: var(--color-blue-950); }
+}
+
+.btn-next {
+  @include cta-button;
+  background-color: var(--color-blue-950);
+}
+
 .btn-confirm {
-  font-family: var(--font-family);
-  font-size: 1rem;
-  font-weight: var(--font-weight-medium);
-  color: var(--color-white);
-  padding: 14px 28px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s;
+  @include cta-button;
+  background-color: var(--color-purple-600);
 }
 
-.btn-next { background-color: var(--color-blue-950); }
-.btn-next:hover { opacity: 0.8; }
+/* ── Step transitions ── */
+.step-forward-enter-active,
+.step-forward-leave-active,
+.step-backward-enter-active,
+.step-backward-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
 
-.btn-confirm { background-color: var(--color-purple-600); }
-.btn-confirm:hover { opacity: 0.8; }
+/* Forward: new step slides in from right, old slides out to left */
+.step-forward-enter-from {
+  opacity: 0;
+  transform: translateX(28px);
+}
+.step-forward-leave-to {
+  opacity: 0;
+  transform: translateX(-28px);
+}
 
+/* Backward: new step slides in from left, old slides out to right */
+.step-backward-enter-from {
+  opacity: 0;
+  transform: translateX(-28px);
+}
+.step-backward-leave-to {
+  opacity: 0;
+  transform: translateX(28px);
+}
+
+/* ── Mobile ── */
 @media (max-width: 767px) {
   .card {
     flex-direction: column;

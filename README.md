@@ -44,11 +44,14 @@ Users should be able to:
 
 ### Built with
 
-- [Nuxt 3](https://nuxt.com/) — SPA mode (`ssr: false`), which gave me Vue's reactivity without any server overhead I didn't need
-- [Vue 3](https://vuejs.org/) + TypeScript — composables, `computed`, `ref`, the whole deal
-- CSS custom properties — handled the full design token system without needing Sass
+- [Nuxt 3](https://nuxt.com/) — SPA mode (`ssr: false`), Vue reactivity without server overhead
+- [Vue 3](https://vuejs.org/) + TypeScript — composables, `computed`, `ref`, scoped component styles
+- [Sass (SCSS)](https://sass-lang.com/) — design tokens, `@mixin`, BEM nesting, and a Sass map looped into CSS custom properties at build time
+- CSS custom properties — runtime token consumption across all components
 - Flexbox — layout throughout
-- Scoped component styles — kept things tidy with no style bleed between steps
+- `<Transition>` — direction-aware slide animations between steps
+- `sessionStorage` — form state survives a page refresh
+- URL query sync — `?step=N` keeps the browser history coherent
 
 ### What I learned
 
@@ -61,7 +64,45 @@ const billing = ref<Billing>('monthly')
 const total = computed(() => planPrice.value + addonsTotal.value)
 ```
 
-Also reinforced how clean Vue's template auto-unwrapping is. No `.value` noise in the template, the reactivity just works.
+The Sass design-token setup was genuinely useful rather than just checkbox Sass. A single `$color-map` in `_variables.scss` is looped at compile time to emit every CSS custom property:
+
+```scss
+// _variables.scss
+$color-map: (
+  'blue-950': hsl(213, 96%, 18%),
+  'purple-600': hsl(243, 100%, 62%),
+  // ...
+);
+
+// main.scss
+:root {
+  @each $name, $value in $color-map {
+    --color-#{$name}: #{$value};
+  }
+}
+```
+
+One value to update, both the Sass variable and the runtime custom property stay in sync automatically.
+
+For step transitions I tracked navigation direction and swapped the `<Transition>` name to get a real directional slide — forward goes right-to-left, back goes left-to-right — without two separate transition components.
+
+```ts
+const isForward = ref(true)
+watch(currentStep, (newVal, oldVal) => { isForward.value = newVal > oldVal })
+const transitionName = computed(() => isForward.value ? 'step-forward' : 'step-backward')
+```
+
+For accessibility I added an `aria-live="polite"` region that announces the current step name whenever navigation happens. It starts empty so there's no announcement on first load — screen readers only hear it when something actually changes:
+
+```ts
+watch(currentStep, (step) => {
+  announcement.value = step < 5
+    ? `Step ${step} of 4: ${STEP_NAMES[step]}`
+    : 'Complete: Thank you!'
+})
+```
+
+Phone formatting felt like a small thing but it's the kind of polish that's immediately visible. Stripping to digits and re-inserting spaces on each keystroke required swapping from `v-model` to `:value` + `@input` so the DOM value is overwritten in-place rather than via the default event flow.
 
 On the CSS side, building a custom toggle switch with just a checkbox and CSS was a nice exercise — no JS needed, just `:checked` state driving a `transform: translateX()` on the thumb.
 
@@ -73,10 +114,6 @@ On the CSS side, building a custom toggle switch with just a checkbox and CSS wa
 
 ### Continued development
 
-A few things I want to tighten up going forward:
-
-- **Transitions between steps** — even a simple fade would make the UX feel a lot more polished. I used `v-show` here for simplicity, but swapping to `<Transition>` is a natural next step.
-- **Form state persistence** — right now a page refresh wipes everything. `localStorage` or at least `sessionStorage` could fix that with minimal effort.
 - **More intentional mobile-first CSS** — I wrote desktop-first here and added mobile breakpoints after the fact. I'd like to flip that habit on the next project.
 
 ### AI Collaboration

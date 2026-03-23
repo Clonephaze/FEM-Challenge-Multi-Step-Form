@@ -1,0 +1,112 @@
+@use 'variables' as *;
+
+// =========================================================
+//  Fonts
+// =========================================================
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('/fonts/Ubuntu-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('/fonts/Ubuntu-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('/fonts/Ubuntu-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+// =========================================================
+//  Custom Properties
+//  Generated from $color-map via @each — update a value once
+//  in _variables.scss and both compile-time Sass and the
+//  runtime CSS custom properties stay in sync automatically.
+// =========================================================
+:root {
+  @each $name, $value in $color-map {
+    --color-#{$name}: #{$value};
+  }
+
+  --font-family: 'Ubuntu', sans-serif;
+  --font-size-base: 16px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+}
+
+// =========================================================
+//  Reset
+// =========================================================
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: var(--font-size-base);
+}
+
+body {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-blue-950);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input {
+  font-family: inherit;
+}
+
+a {
+  text-decoration: underline;
+  color: var(--color-grey-500);
+}
+
+// =========================================================
+//  Focus styles (keyboard accessibility)
+// =========================================================
+:focus-visible {
+  outline: 2px solid var(--color-purple-600);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+// Inputs get a border-colour focus instead of an outline
+input:focus-visible {
+  outline: none;
+  border-color: var(--color-purple-600);
+}
+
+// =========================================================
+//  Shared step typography (used across all step components)
+// =========================================================
+.step-title {
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-blue-950);
+  margin-bottom: 12px;
+}
+
+.step-subtitle {
+  font-size: 1rem;
+  color: var(--color-grey-500);
+  line-height: 1.6;
+}
