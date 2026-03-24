@@ -21,19 +21,25 @@ This is my solution to the [Multi-step form challenge on Frontend Mentor](https:
 
 Users should be able to:
 
-- Complete each step of the sequence
-- Go back to a previous step to update their selections
-- See a summary of their selections on the final step and confirm their order
-- View the optimal layout for the interface depending on their device's screen size
-- See hover and focus states for all interactive elements on the page
-- Receive form validation messages if:
+- ✓ Complete each step of the sequence
+- ✓ Go back to a previous step to update their selections
+- ✓ See a summary of their selections on the final step and confirm their order
+- ✓ View the optimal layout for the interface depending on their device's screen size
+- ✓ See hover and focus states for all interactive elements on the page
+- ✓ Receive form validation messages if:
   - A field has been missed
   - The email address is not formatted correctly
   - A step is submitted, but no selection has been made
 
-### Screenshot
-
-![](./screenshot.jpg)
+Additionally, the following optional enhancements were implemented:
+- ✓ Write styles using a pre-processor — Sass with `@mixin`, BEM nesting, and a design-token map looped into CSS custom properties at build time
+- ✓ Persist form state across page refreshes using `sessionStorage`
+- ✓ Sync the current step with the URL query string for better browser history navigation
+- ✓ Direction-aware slide transitions between steps using a single `<Transition>` component
+- ✓ `aria-live` region that announces the current step name on every navigation
+- ✓ Programmatic focus management — keyboard focus is moved to the new step content after each navigation so Tab lands in the right place
+- ✓ Phone number auto-formatting as you type (E.164-aware: `234 567 8901` or `+1 234 567 8901`)
+- ✓ Reset button in the nav bar and on the confirmation page to clear state and start over
 
 ### Links
 
